@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const resultDisplay = document.querySelector("#result");
     const width = 4;
     let squares = [];
+    let score = 0
 
     //플레잉 보드 만들기 그리드에 사각형 생성하기.
     function createBoard() {
@@ -26,6 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let randomNumber = Math.floor(Math.random() * squares.length);
         if (squares[randomNumber].innerHTML == 0) {
             squares[randomNumber].innerHTML = 2;
+            checkForGameOver()
         } else {
             generate();
         }
@@ -35,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function moveRight() {
         for (let i = 0; i < 16; i++) {
             if (i % 4 === 0) { //2차원 배열 만들기.
-                //세로 (무조건 첫번째를 기준으로 가로로 0 1 2 3 추출)
+                //세로를 기준으로 가로 0 1 2 3 추출)
                 let totalOne = squares[i].innerHTML;
                 let totalTwo = squares[i + 1].innerHTML;
                 let totalThree = squares[i + 2].innerHTML;
@@ -64,6 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    //swipe left
     function moveLeft() {
         for (let i = 0; i < 16; i++) {
             if (i % 4 === 0) {
@@ -90,24 +93,92 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    //연속된 블럭이 같은 숫자를 가진다면 결합하는 조건문
+    //swipe down
+    function moveDown() {
+        //가로줄을 기준으로 세로줄 추출. 한번 돌 때 마다 1 2 3 4 < 이 각각의 세로줄의 배열 추출
+        for (let i = 0; i < width; i++) {
+            let totalOne = squares[i].innerHTML;
+            let totalTwo = squares[i + width].innerHTML;
+            let totalThree = squares[i + (width * 2)].innerHTML;
+            let totalFour = squares[i + (width * 3)].innerHTML;
+            let column = [parseInt(totalOne), parseInt(totalTwo), parseInt(totalThree), parseInt(totalFour)];
+
+            let filteredColumn = column.filter(num => num);
+            let missing = width - filteredColumn.length;
+            let zeros = Array(missing).fill(0);
+            let newCoulmn = zeros.concat(filteredColumn);
+
+            squares[i].innerHTML = newCoulmn[0];
+            squares[i + width].innerHTML = newCoulmn[1];
+            squares[i + width * 2].innerHTML = newCoulmn[2];
+            squares[i + width * 3].innerHTML = newCoulmn[3];
+        }
+    }
+
+    //swipe up
+    function moveUp() {
+        //가로줄을 기준으로 세로줄 추출. 한번 돌 때 마다 1 2 3 4 < 이 각각의 세로줄의 배열 추출
+        for (let i = 0; i < width; i++) {
+            let totalOne = squares[i].innerHTML;
+            let totalTwo = squares[i + width].innerHTML;
+            let totalThree = squares[i + (width * 2)].innerHTML;
+            let totalFour = squares[i + (width * 3)].innerHTML;
+            let column = [parseInt(totalOne), parseInt(totalTwo), parseInt(totalThree), parseInt(totalFour)];
+
+            let filteredColumn = column.filter(num => num);
+            let missing = width - filteredColumn.length;
+            let zeros = Array(missing).fill(0);
+            let newCoulmn = filteredColumn.concat(zeros);
+
+            squares[i].innerHTML = newCoulmn[0];
+            squares[i + width].innerHTML = newCoulmn[1];
+            squares[i + width * 2].innerHTML = newCoulmn[2];
+            squares[i + width * 3].innerHTML = newCoulmn[3];
+        }
+    }
+
+
+
+    //가로로 연속된 블럭이 같은 숫자를 가진다면 결합하는 조건문
     function combineRow() {
         for (let i = 0; i < width * width - 1; i++) {
             if (squares[i].innerHTML === squares[i + 1].innerHTML) {
                 let combineTotal = parseInt(squares[i].innerHTML) + parseInt(squares[i + 1].innerHTML);
                 squares[i].innerHTML = combineTotal;
                 squares[i + 1].innerHTML = 0;
+                score += combineTotal
+                scoreDisplay.innerHTML = score
             }
         }
-
+        checkForWin()
     }
+
+
+    //세로로 연속된 블럭이 같은 숫자를 가진다면 결합하는 조건문
+    function combineColumn() {
+        for (let i = 0; i < (width * width) - width; i++) {
+            if (squares[i].innerHTML === squares[i + width].innerHTML) {
+                let combinedTotal = parseInt(squares[i].innerHTML) + parseInt(squares[i + width].innerHTML);
+                squares[i].innerHTML = combinedTotal;
+                squares[i + width].innerHTML = 0;
+                score += combinedTotal
+                scoreDisplay.innerHTML = score
+            }
+        }
+        checkForWin()
+    }
+
 
     //키코드
     function control(e) {
         if (e.keyCode === 39) {
-            keyRight()
+            keyRight();
         } else if (e.keyCode === 37) {
-            keyLeft()
+            keyLeft();
+        } else if (e.keyCode === 38) {
+            keyUp();
+        } else if (e.keyCode === 40) {
+            keyDown();
         }
     }
     document.addEventListener('keyup', control);
@@ -124,5 +195,44 @@ document.addEventListener("DOMContentLoaded", () => {
         combineRow();
         moveLeft();
         generate();
+    }
+
+    function keyDown() {
+        moveDown();
+        combineColumn();
+        moveDown();
+        generate();
+    }
+
+    function keyUp() {
+        moveUp();
+        combineColumn();
+        moveUp();
+        generate();
+    }
+
+
+    //승리 확인하기
+    function checkForWin() {
+        for (let i = 0; i < squares.length; i++) {
+            if (squares[i].innerHTML == 2048) {
+                resultDisplay.innerHTML = "You Win!"
+                document.removeEventListener('keyup', control)
+            }
+        }
+    }
+
+
+    function checkForGameOver() {
+        let zeros = 0;
+        for (let i = 0; i < squares.length; i++) {
+            if (squares[i].innerHTML == 0) {
+                zeros++;
+            }
+        }
+        if (zeros === 0) {
+            resultDisplay.innerHTML = "You Lose!";
+            document.removeEventListener('keyup', control)
+        }
     }
 })
