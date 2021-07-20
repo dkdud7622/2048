@@ -35,7 +35,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     //swipe right
     function moveRight() {
-        for (let i = 0; i < 16; i++) {
+        for (let i = 0; i < width * width; i++) {
             if (i % 4 === 0) { //2차원 배열 만들기.
                 //세로를 기준으로 가로 0 1 2 3 추출)
                 let totalOne = squares[i].innerHTML;
@@ -215,7 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
     //승리 확인하기
     function checkForWin() {
         for (let i = 0; i < squares.length; i++) {
-            if (squares[i].innerHTML == 2048) {
+            if (squares[i].innerHTML === 2048) {
                 resultDisplay.innerHTML = "You Win!"
                 document.removeEventListener('keyup', control)
             }
